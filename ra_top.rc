@@ -1,0 +1,16 @@
+# Boot service that starts the RetroArch top-screen watcher (ra_top.sh).
+# Placed in /system/etc/init/ (via the remount overlay) and read by init at boot.
+#
+# The shell seclabel/user mirror the stock "console" service so init accepts the
+# executable and the service can talk to ActivityManager as the shell user (which is what
+# lets `am start --display` work -- a normal app uid cannot pick a display).
+
+service ra_top /system/bin/sh /data/local/tmp/ra_top.sh
+    user shell
+    group shell log readproc
+    seclabel u:r:shell:s0
+    oneshot
+    disabled
+
+on property:sys.boot_completed=1
+    start ra_top
