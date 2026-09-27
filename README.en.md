@@ -42,19 +42,26 @@ Edit `ra_top.sh` if needed:
 
 - `DISPLAY_ID` — the display to send games to. On the RG DS the top screen is `2`.
   Find yours: `adb shell dumpsys display | grep -E 'displayId|DisplayDeviceInfo'`.
-- `WAIT` — seconds to wait before moving (let the game load; moving too early cancels the
-  ROM load).
-- `PKG`/`ACT` — for a different RetroArch build (e.g. `com.retroarch`).
+- `ACT`/`CFG` — RetroArch activity and config path (aarch64 build by default).
 
 After editing: `adb push ra_top.sh /data/local/tmp/` and `adb reboot` (or restart the service).
 
 ## How it works
 
 - the `ra_top` init service starts at `sys.boot_completed=1` and runs `ra_top.sh`;
-- the script watches RetroArch's pid; on a new launch it waits `WAIT` seconds and runs
-  `am start --display <id> -n <activity>` — the empty intent is delivered to the already
-  running RetroArch instance, so the game keeps playing but the window relocates to the top;
-- it acts once per process start and never interferes while you play.
+- the script reads RetroArch's log (which game and core it is starting —
+  `auto-start game [...]`, `libretro path: [...]`) and **relaunches that same game on
+  `DISPLAY_ID`** via `am start --display`;
+- because it starts the real content (instead of sending an empty intent to an already
+  running instance), slow-loading games (PS1) are not cancelled;
+- it acts once per launch and never interferes while you play.
+
+## PS1 (and other cores that need a BIOS)
+
+PS1 cores (`swanstation`, `beetle_psx*`) need a **BIOS** in RetroArch's system directory
+(`/storage/emulated/0/RetroArch/system/`): e.g. `scph1002.bin` (PAL) or `scph5501.bin`
+(NTSC-U). Without a BIOS the game will not start. The BIOS is identified by content, but a
+canonical filename is recommended.
 
 ## Uninstall
 
